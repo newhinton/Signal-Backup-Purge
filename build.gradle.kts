@@ -20,3 +20,13 @@ tasks.test {
 kotlin {
     jvmToolchain(17)
 }
+
+tasks.jar {
+    manifest.attributes["Main-Class"] = "de.felixnuesse.MainKt"
+    val dependencies = configurations
+        .runtimeClasspath
+        .get()
+        .map(::zipTree) // OR .map { zipTree(it) }
+    from(dependencies)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

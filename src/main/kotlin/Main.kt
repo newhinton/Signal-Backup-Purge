@@ -1,16 +1,19 @@
 package de.felixnuesse
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
-import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.mordant.terminal.YesNoPrompt
 import kotlinx.datetime.*
 import kotlinx.datetime.format.byUnicodePattern
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.ArrayList
 import java.util.HashMap
 
@@ -19,18 +22,20 @@ fun main(args: Array<String>) = SignalBackupPurge().main(args)
 
 const val helpString="Copy <source> to <dest>, or multiple <source>(s) to directory <dest>."
 
-class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = false, help = helpString) {
+class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpString) {
 
     companion object {
         const val KEY_ALL = "all"
     }
 
-    val dryRun: Boolean? by option("-d", "--dry-run").boolean().default(true).help("Should we make changes?")
+    private val delete: Boolean? by option("-d", "--delete").flag(default = false).help("Immediately delete Files.")
+    private val yes: Boolean? by option("-y", "--yes").flag(default = false).help("Answer all promts with yes")
+    private val printDeletes: Boolean? by option("-p", "--print-deletes").flag(default = false).help("Print a list of shell commands to purge the signal backup folder")
+    private val stats: Boolean? by option("-s", "--stats").flag(default = false).help("print statistics of the purge")
     private val source by argument().file().default(File(""))
 
 
     override fun run() {
-        println(source.absolutePath)
 
         val validFileList = ArrayList<String>()
 
@@ -110,15 +115,39 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = false, help = help
             }
         }
 
-
-        println("Keep: ")
-        keepList.sorted().forEach {
-            println(it)
+        if(printDeletes == true){
+            discardList.sorted().forEach {
+                println("rm ${source.absoluteFile}/$it")
+            }
         }
 
-        println("Discard: ")
-        discardList.sorted().forEach {
-            println(it)
+
+        if(stats == true) {
+            println("Statistics:")
+
+            var keepSize = 0L
+            keepList.forEach {
+                keepSize += Files.size(Paths.get("${source.absoluteFile}/$it"))
+            }
+
+            var deleteSize = 0L
+            discardList.forEach {
+                deleteSize += Files.size(Paths.get("${source.absoluteFile}/$it"))
+            }
+
+            println("${keepList.size} Files will be kept. ($keepSize b)")
+            println("${discardList.size} Files will be deleted. ($deleteSize b)")
+        }
+
+        if(delete == true) {
+            discardList.forEach {
+                val target = "${source.absoluteFile}/$it"
+                if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes == true) {
+                    //File(target).delete()
+                    println("Deleted: $target")
+                }
+
+            }
         }
 
     }
