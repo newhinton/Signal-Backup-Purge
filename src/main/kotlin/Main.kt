@@ -11,6 +11,7 @@ import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import kotlinx.datetime.*
 import kotlinx.datetime.format.byUnicodePattern
+import org.apache.commons.io.FileUtils
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -129,16 +130,16 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             println("Checking: ${source.absoluteFile}")
             var keepSize = 0L
             keepList.forEach {
-                keepSize += Files.size(Paths.get("${source.absoluteFile}/$it"))
+                keepSize += FileUtils.sizeOf(File("${source.absoluteFile}/$it"))
             }
 
             var deleteSize = 0L
             discardList.forEach {
-                deleteSize += Files.size(Paths.get("${source.absoluteFile}/$it"))
+                deleteSize += FileUtils.sizeOf(File("${source.absoluteFile}/$it"))
             }
 
-            println("${keepList.size} Files will be kept. ($keepSize b)")
-            println("${discardList.size} Files will be deleted. ($deleteSize b)")
+            println("${keepList.size} Files will be kept. (${FileUtils.byteCountToDisplaySize(keepSize)})")
+            println("${discardList.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(deleteSize)})")
         }
 
         if(delete == true) {

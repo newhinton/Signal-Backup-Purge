@@ -13,12 +13,13 @@ dependencies {
     testImplementation(kotlin("test"))
     implementation("com.github.ajalt.clikt:clikt:4.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    implementation("commons-io:commons-io:2.16.1")
 }
 tasks.test {
     useJUnitPlatform()
 }
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(11)
 }
 
 tasks.jar {
