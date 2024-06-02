@@ -143,7 +143,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             discardList.forEach {
                 val target = "${source.absoluteFile}/$it"
                 if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes == true) {
-                    //File(target).delete()
+                    File(target).delete()
                     println("Deleted: $target")
                 }
 
