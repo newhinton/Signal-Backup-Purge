@@ -22,8 +22,13 @@ import java.util.HashMap
 fun main(args: Array<String>) = SignalBackupPurge().main(args)
 
 const val helpString="Scan <source> for Signal Backups. This tool keeps 6 full months of your backups by default, and 3 months after that keep 2 backups. "+
+        "\n"+
+        "\n"+
         "This is called the secondary retention. Secondary retention uses the first backup in a month, and form all existing backups for that month, the closest to the middle."+
-        "After the secondary retention period, only the first backup per month is kept."
+        "After the secondary retention period, only the first backup per month is kept."+
+        "\n"+
+        "\n"+
+        "Note: Only files named \"signal-yyyy-MM-dd-HH-mm-ss.backup\" are recognized. Be careful to check that all the files are named that way! Files that do not start with 'signal' and end with '.backup' are ignored regardless."
 
 class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpString) {
 
