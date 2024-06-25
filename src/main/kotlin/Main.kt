@@ -160,14 +160,20 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             }
         }
 
-        if(printDeletes == true){
+        if(dry){
+            discardList.forEach {
+                println("Deleted: ${source.absoluteFile}/$it")
+            }
+        }
+
+        if(printDeletes){
             discardList.sorted().forEach {
                 println("rm ${source.absoluteFile}/$it")
             }
         }
 
 
-        if(stats == true) {
+        if(stats) {
             println("Statistics:")
 
             println("Checking: ${source.absoluteFile}")
@@ -183,12 +189,6 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
             println("${keepList.size} Files will be kept. (${FileUtils.byteCountToDisplaySize(keepSize)})")
             println("${discardList.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(deleteSize)})")
-        }
-
-        if(dry == true){
-            discardList.forEach {
-                println("Deleted: ${source.absoluteFile}/$it")
-            }
         }
 
     }
