@@ -187,6 +187,44 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
                 deleteSize += FileUtils.sizeOf(File("${source.absoluteFile}/$it"))
             }
 
+            // Todo: Migrate each backup into a "backup" class, which has its date already as an object,
+            // aswell as a "delete or keep" attribution. This makes stuff like this way easier.
+            // todo: add "saved storage" column
+            // todo: add "used storage" column
+            println("┌────────────┬──────┬─────────┐")
+            println("│ Year.Month │ Kept │ Deleted │")
+            println("├────────────┼──────┼─────────┤")
+            orderedMap.forEach { (year, hashMap) ->
+                run {
+                    val sortedMap = hashMap.toSortedMap(object : Comparator <String> {
+                        override fun compare (p0: String, pi: String) : Int {
+                            val p0_ = p0.padStart(3, '0')
+                            val pi_ = pi.padStart(3, '0')
+                            return pi_.compareTo(p0_)
+                        }
+                    })
+                    sortedMap.forEach { (month, files) ->
+                        run {
+                            var kept = 0
+                            var deleted = 0
+
+                            files.forEach {
+                                if (keepList.contains(it)){
+                                    kept++
+                                }
+                                if (discardList.contains(it)){
+                                    deleted++
+                                }
+                            }
+                            println("│ $year.${month.padEnd(5)} │ ${kept.toString().padEnd(4)} │ ${deleted.toString().padEnd(7)} │")
+                        }
+                    }
+                }
+                println("├────────────┼──────┼─────────┤")
+            }
+            println("│ Overall    │ ${keepList.size.toString().padEnd(4)} │ ${discardList.size.toString().padEnd(7)} │")
+            println("└────────────┴──────┴─────────┘")
+
             println("${keepList.size} Files will be kept. (${FileUtils.byteCountToDisplaySize(keepSize)})")
             println("${discardList.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(deleteSize)})")
         }
