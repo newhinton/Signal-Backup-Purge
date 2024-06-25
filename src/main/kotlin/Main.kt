@@ -21,7 +21,9 @@ import java.util.HashMap
 
 fun main(args: Array<String>) = SignalBackupPurge().main(args)
 
-const val helpString="Copy <source> to <dest>, or multiple <source>(s) to directory <dest>."
+const val helpString="Scan <source> for Signal Backups. This tool keeps 6 full months of your backups by default, and 3 months after that keep 2 backups. "+
+        "This is called the secondary retention. Secondary retention uses the first backup in a month, and form all existing backups for that month, the closest to the middle."+
+        "After the secondary retention period, only the first backup per month is kept."
 
 class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpString) {
 
@@ -31,11 +33,12 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
     private val delete: Boolean by option("-d", "--delete").flag(default = false).help("Immediately delete Files.")
     private val dry: Boolean by option("-n", "--dry-run").flag(default = false).help("Print all files that would be deleted by -d.")
-    private val yes: Boolean by option("-y", "--yes").flag(default = false).help("Answer all prompts with yes")
-    private val printDeletes: Boolean by option("-p", "--print-deletes").flag(default = false).help("Print a list of shell commands to purge the signal backup folder")
-    private val stats: Boolean by option("-s", "--stats").flag(default = false).help("print statistics of the purge")
-    private val keep: Int by option("-k", "--keep").int().default(6).help("How many months should be kept fully")
-    private val keepSecondary: Int by option("-c", "--keep-secondary").int().default(3).help("How many months should have two files after the full ones?")
+    private val yes: Boolean by option("-y", "--yes").flag(default = false).help("Answer all prompts with yes. USE CAREFULLY!")
+    private val printDeletes: Boolean by option("-p", "--print-deletes").flag(default = false).help("Print a list of shell commands to purge the signal backup folder.")
+    private val stats: Boolean by option("-s", "--stats").flag(default = false).help("Print statistics about the purge.")
+    private val keep: Int by option("-k", "--keep").int().default(6).help("Primary Retention Period: This determines how many months keep all backup files.")
+    private val keepSecondary: Int by option("-c", "--keep-secondary").int().default(3).help("Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the primary retention period.")
+    private val verbosity: Boolean by option("-v", "--verbose").flag(default = false).help("Increases detail of the output. Shows deletions and kept files.")
     private val source by argument().file().default(File("."))
 
 
@@ -125,7 +128,10 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
 
         keepList.sorted().forEach {
-            println("Keep: ${source.absoluteFile}/$it")
+            if(verbosity) {
+                println("Keep: ${source.absoluteFile}/$it")
+            }
+
         }
 
 
@@ -133,6 +139,19 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
         validFileList.forEach {
             if(!keepList.contains(it)) {
                 discardList.add(it)
+            }
+        }
+
+        if(delete == true) {
+            discardList.forEach {
+                val target = "${source.absoluteFile}/$it"
+                if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes == true) {
+                    File(target).delete()
+                    if(verbosity) {
+                        println("Deleted: $target")
+                    }
+                }
+
             }
         }
 
@@ -159,17 +178,6 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
             println("${keepList.size} Files will be kept. (${FileUtils.byteCountToDisplaySize(keepSize)})")
             println("${discardList.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(deleteSize)})")
-        }
-
-        if(delete == true) {
-            discardList.forEach {
-                val target = "${source.absoluteFile}/$it"
-                if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes == true) {
-                    File(target).delete()
-                    println("Deleted: $target")
-                }
-
-            }
         }
 
         if(dry == true){
