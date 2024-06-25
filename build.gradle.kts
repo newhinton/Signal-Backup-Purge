@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "de.felixnuesse"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -30,4 +30,9 @@ tasks.jar {
         .map(::zipTree) // OR .map { zipTree(it) }
     from(dependencies)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register<JavaExec>("execute") {
+    mainClass.set("de.felixnuesse.MainKt")
+    classpath = sourceSets["main"].runtimeClasspath
 }
