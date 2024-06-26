@@ -49,35 +49,35 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
     override fun run() {
 
-        val validFileList = ArrayList<String>()
+        // first, prepare cutoffs.
+        Cutoffs.setPrimary(keep)
+        Cutoffs.setSecondary(keepSecondary)
+
+
+        val validFileList = ArrayList<Backup>()
 
         val regex = Regex("signal-(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}).*backup")
         source.listFiles()?.forEach {
             if(regex.matches(it.name)) {
-                validFileList.add(it.name)
+                validFileList.add(Backup(it.name))
             }
         }
 
-        val tzSystem = TimeZone.currentSystemDefault()
-
-        val cutoffPrimary: Instant = Clock.System.now().minus(keep, DateTimeUnit.MONTH, tzSystem)
-        val cutoffSecondary: Instant = Clock.System.now().minus(keep+keepSecondary, DateTimeUnit.MONTH, tzSystem)
-
         // Year: [Month: List<Names>]}
-        val orderedMap = HashMap<String, HashMap<String, ArrayList<String>>>()
+        val orderedMap = HashMap<String, HashMap<String, ArrayList<Backup>>>()
 
-        validFileList.sorted().forEach{
-            val date = createDateFromTitle(it)
-
+        validFileList.sortBy { it.getDate() }
+        validFileList.forEach{
+            val date = it.getDate()
 
             if(!orderedMap.containsKey("${date.year}")) {
-                orderedMap["${date.year}"] = HashMap<String, ArrayList<String>>()
+                orderedMap["${date.year}"] = HashMap<String, ArrayList<Backup>>()
             }
 
             val assertedMap = orderedMap["${date.year}"]!!
 
 
-            val key = if(cutoffPrimary.toEpochMilliseconds() < date.toInstant(tzSystem).toEpochMilliseconds()) {
+            val key = if(Cutoffs.getPrimary().toEpochMilliseconds() < date.toInstant(Utils.getSystemTimezone()).toEpochMilliseconds()) {
                 KEY_ALL
             } else {
                 "${date.month.number}"
@@ -99,32 +99,31 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
                     run {
                         //println(month)
                         if(month==KEY_ALL) {
-                            keepList.addAll(files)
+                            files.forEach {
+                                keepList.add(it.getName())
+                            }
                             return@run
                         }
 
-                        val sorted = files.sorted()
-                        val first = sorted.first()
+                        files.sortBy { it.getDate() }
+                        val first = files.first()
 
 
                         // last year, add two per month
-                        val fileDate = createDateFromYearAndMonth(year.toInt(), month.toInt()).toInstant(tzSystem).toEpochMilliseconds()
-                        val isAfterPrimaryStoragePhase = cutoffPrimary.toEpochMilliseconds() > fileDate
-                        val isAfterSecondaryStoragePhase = cutoffSecondary.toEpochMilliseconds() > fileDate
-                        val isInSecondaryStoragePhase = isAfterPrimaryStoragePhase and !isAfterSecondaryStoragePhase
-
-                        if(isInSecondaryStoragePhase) {
+                        if(first.isInSecondaryStoragePhase()) {
                             if(files.size <= 3){
-                                keepList.addAll(files)
+                                files.forEach {
+                                    keepList.add(it.getName())
+                                }
                             } else {
-                                keepList.add(first)
-                                val middle = (sorted.size/2)-1 // we start with 0
-                                keepList.add(sorted[middle])
+                                keepList.add(first.getName())
+                                val middle = (files.size/2)-1 // we start with 0
+                                keepList.add(files[middle].getName())
                             }
                         }
 
-                        if(isAfterSecondaryStoragePhase) {
-                            keepList.add(first)
+                        if(first.isAfterSecondaryStoragePhase()) {
+                            keepList.add(first.getName())
                         }
                     }
                 }
@@ -142,8 +141,8 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
         val discardList = ArrayList<String>()
         validFileList.forEach {
-            if(!keepList.contains(it)) {
-                discardList.add(it)
+            if(!keepList.contains(it.getName())) {
+                discardList.add(it.getName())
             }
         }
 
@@ -209,10 +208,10 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
                             var deleted = 0
 
                             files.forEach {
-                                if (keepList.contains(it)){
+                                if (keepList.contains(it.getName())){
                                     kept++
                                 }
-                                if (discardList.contains(it)){
+                                if (discardList.contains(it.getName())){
                                     deleted++
                                 }
                             }
@@ -229,16 +228,5 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             println("${discardList.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(deleteSize)})")
         }
 
-    }
-
-    private fun createDateFromTitle(name: String): LocalDateTime {
-        val dateString = name.replace("signal-", "").replace(".backup", "")
-        val formatPattern = "yyyy-MM-dd-HH-mm-ss"
-        val dateTimeFormat = LocalDateTime.Format { byUnicodePattern(formatPattern) }
-        return dateTimeFormat.parse(dateString)
-    }
-
-    private fun createDateFromYearAndMonth(year: Int, month: Int): LocalDateTime {
-        return LocalDateTime(year, month, 1, 0, 0, 0, 0)
     }
 }
