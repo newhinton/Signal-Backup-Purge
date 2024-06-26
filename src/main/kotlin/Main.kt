@@ -222,7 +222,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
         val months = processMonths()
         // todo: pull out some of the list expressions
-        println(TableFormatter.format(months).asString())
+        println(TableFormatter.format(months))
 
     }
 
