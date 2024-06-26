@@ -43,3 +43,4 @@ bin/
 
 
 testfiles/*.backup
+/testfiles/createFiles.sh
