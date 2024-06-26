@@ -40,7 +40,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
     private val delete: Boolean by option("-d", "--delete").flag(default = false).help("Immediately delete Files.")
     private val dry: Boolean by option("-n", "--dry-run").flag(default = false).help("Print all files that would be deleted by -d.")
     private val yes: Boolean by option("-y", "--yes").flag(default = false).help("Answer all prompts with yes. USE CAREFULLY!")
-    private val printDeletes: Boolean by option("-p", "--print-deletes").flag(default = false).help("Print a list of shell commands to purge the signal backup folder.")
+    private val printDeletes: Boolean by option("-p", "--print-manual-deletion").flag(default = false).help("Print a list of shell commands to purge the signal backup folder manually.")
     private val stats: Boolean by option("-s", "--stats").flag(default = false).help("Print statistics about the purge.")
     private val keep: Int by option("-k", "--keep").int().default(6).help("Primary Retention Period: This determines how many months keep all backup files.")
     private val keepSecondary: Int by option("-c", "--keep-secondary").int().default(3).help("Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the primary retention period.")
@@ -54,94 +54,37 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
         Cutoffs.setPrimary(keep)
         Cutoffs.setSecondary(keepSecondary)
 
+        // Process files into usable structure
+        val months = processMonths()
 
-        val validFileList = generateBackupList()
+        val allDeleted = months.flatMap { it.getDeleted() }
+        val allKept = months.flatMap { it.getKeptFiles() }
 
-        // Year: [Month: List<Names>]}
-        val orderedMap = HashMap<String, HashMap<String, ArrayList<Backup>>>()
+        allDeleted.sortedBy { it.getDate() }
+        allKept.sortedBy { it.getDate() }
 
-        validFileList.sortBy { it.getDate() }
-        validFileList.forEach{
-            val date = it.getDate()
-
-            if(!orderedMap.containsKey("${date.year}")) {
-                orderedMap["${date.year}"] = HashMap<String, ArrayList<Backup>>()
-            }
-
-            val assertedMap = orderedMap["${date.year}"]!!
-
-            val key = if(it.isInPrimaryStoragePhase()) {
-                KEY_ALL
-            } else {
-                "${date.month.number}"
-            }
-
-            if(!assertedMap.containsKey(key)) {
-                assertedMap[key] = ArrayList()
-            }
-            assertedMap[key]!!.add(it)
-
-        }
-
-        val keepList = ArrayList<String>()
-        orderedMap.forEach { (year, hashMap) ->
-            run {
-                //println("#####")
-                //println(year)
-                hashMap.forEach { (month, files) ->
-                    run {
-                        //println(month)
-                        if(month==KEY_ALL) {
-                            files.forEach {
-                                keepList.add(it.getName())
-                            }
-                            return@run
-                        }
-
-                        files.sortBy { it.getDate() }
-                        val first = files.first()
-
-
-                        // last year, add two per month
-                        if(first.isInSecondaryStoragePhase()) {
-                            if(files.size <= 3){
-                                files.forEach {
-                                    keepList.add(it.getName())
-                                }
-                            } else {
-                                keepList.add(first.getName())
-                                val middle = (files.size/2)-1 // we start with 0
-                                keepList.add(files[middle].getName())
-                            }
-                        }
-
-                        if(first.isAfterSecondaryStoragePhase()) {
-                            keepList.add(first.getName())
-                        }
-                    }
-                }
+        if(verbosity) {
+            allKept.forEach{
+                println("Keep: ${source.absoluteFile}/${it.getName()}")
             }
         }
 
-
-        keepList.sorted().forEach {
-            if(verbosity) {
-                println("Keep: ${source.absoluteFile}/$it")
+        if(dry){
+            allDeleted.forEach {
+                println("Deleted: ${source.absoluteFile}/${it.getName()}")
             }
         }
 
-
-        val discardList = ArrayList<String>()
-        validFileList.forEach {
-            if(!keepList.contains(it.getName())) {
-                discardList.add(it.getName())
+        if(printDeletes){
+            allDeleted.forEach {
+                println("rm ${source.absoluteFile}/${it.getName()}")
             }
         }
 
-        if(delete == true) {
-            discardList.forEach {
-                val target = "${source.absoluteFile}/$it"
-                if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes == true) {
+        if(delete) {
+            allDeleted.forEach {
+                val target = "${source.absoluteFile}/${it.getName()}"
+                if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes) {
                     File(target).delete()
                     if(verbosity) {
                         println("Deleted: $target")
@@ -151,78 +94,19 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             }
         }
 
-        if(dry){
-            discardList.forEach {
-                println("Deleted: ${source.absoluteFile}/$it")
-            }
-        }
-
-        if(printDeletes){
-            discardList.sorted().forEach {
-                println("rm ${source.absoluteFile}/$it")
-            }
-        }
-
-
         if(stats) {
             println("Statistics:")
 
             println("Checking: ${source.absoluteFile}")
-            var keepSize = 0L
-            keepList.forEach {
-                keepSize += FileUtils.sizeOf(File("${source.absoluteFile}/$it"))
-            }
 
-            var deleteSize = 0L
-            discardList.forEach {
-                deleteSize += FileUtils.sizeOf(File("${source.absoluteFile}/$it"))
-            }
+            println(TableFormatter.format(months))
 
-            // Todo: Migrate each backup into a "backup" class, which has its date already as an object,
-            // aswell as a "delete or keep" attribution. This makes stuff like this way easier.
-            // todo: add "saved storage" column
-            // todo: add "used storage" column
-            println("┌────────────┬──────┬─────────┐")
-            println("│ Year.Month │ Kept │ Deleted │")
-            println("├────────────┼──────┼─────────┤")
-            orderedMap.forEach { (year, hashMap) ->
-                run {
-                    val sortedMap = hashMap.toSortedMap(object : Comparator <String> {
-                        override fun compare (p0: String, pi: String) : Int {
-                            val p0_ = p0.padStart(3, '0')
-                            val pi_ = pi.padStart(3, '0')
-                            return pi_.compareTo(p0_)
-                        }
-                    })
-                    sortedMap.forEach { (month, files) ->
-                        run {
-                            var kept = 0
-                            var deleted = 0
+            val freed = months.sumOf { it.getDeleted().sumOf { inner -> inner.getSize() }}
+            val leftover = months.sumOf { it.getKeptFiles().sumOf { inner -> inner.getSize() }}
 
-                            files.forEach {
-                                if (keepList.contains(it.getName())){
-                                    kept++
-                                }
-                                if (discardList.contains(it.getName())){
-                                    deleted++
-                                }
-                            }
-                            println("│ $year.${month.padEnd(5)} │ ${kept.toString().padEnd(4)} │ ${deleted.toString().padEnd(7)} │")
-                        }
-                    }
-                }
-                println("├────────────┼──────┼─────────┤")
-            }
-            println("│ Overall    │ ${keepList.size.toString().padEnd(4)} │ ${discardList.size.toString().padEnd(7)} │")
-            println("└────────────┴──────┴─────────┘")
-
-            println("${keepList.size} Files will be kept. (${FileUtils.byteCountToDisplaySize(keepSize)})")
-            println("${discardList.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(deleteSize)})")
+            println("${allKept.size} Files will be kept. (${FileUtils.byteCountToDisplaySize(leftover)})")
+            println("${allDeleted.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(freed)})")
         }
-
-        val months = processMonths()
-        // todo: pull out some of the list expressions
-        println(TableFormatter.format(months))
 
     }
 

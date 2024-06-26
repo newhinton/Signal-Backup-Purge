@@ -9,8 +9,8 @@ class TableFormatter {
     companion object {
         fun format(months: ArrayList<Month>): String {
 
-            val freed = months.sumOf { it.getDeleted().sumOf { it.getSize() }}.toString()
-            val leftover = months.sumOf { it.getKeptFiles().sumOf { it.getSize() }}.toString()
+            val freed = months.sumOf { it.getDeleted().sumOf { inner -> inner.getSize() }}.toString()
+            val leftover = months.sumOf { it.getKeptFiles().sumOf { inner -> inner.getSize() }}.toString()
 
             val formatter = listOf<ColumnData<Month>>(
                 Column().header("Year.Month").footer("").with{"${it.year}.${it.month}" },
