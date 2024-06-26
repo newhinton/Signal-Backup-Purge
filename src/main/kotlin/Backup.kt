@@ -19,6 +19,10 @@ class Backup(private var name: String) {
         return markedForDeletion
     }
 
+    fun markForDeletion() {
+        markedForDeletion = true
+    }
+
     // todo: do not require root.
     fun getSize(): Long {
         return if(root == null) {

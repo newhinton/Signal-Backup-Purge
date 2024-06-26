@@ -39,4 +39,30 @@ class Month(var year: Int, var month: Int) {
         return LocalDateTime(year, month, 1, 0, 0, 0, 0)
     }
 
+    fun markBackups() {
+        backupList.sortBy { it.getDate() }
+        val first = backupList.first()
+        val middle = backupList[(backupList.size/2)-1 ] // we start with 0
+
+
+        // last year, add two per month
+        if(first.isInSecondaryStoragePhase()) {
+            if(backupList.size > 3){
+                backupList.forEach {
+                    if(it != first && it != middle) {
+                        it.markForDeletion()
+                    }
+                }
+            }
+        }
+
+        if(first.isAfterSecondaryStoragePhase()) {
+            backupList.forEach {
+                if(it != first) {
+                    it.markForDeletion()
+                }
+            }
+        }
+    }
+
 }
