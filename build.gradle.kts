@@ -14,6 +14,7 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt:4.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("commons-io:commons-io:2.16.1")
+    implementation("com.github.freva:ascii-table:1.8.0")
 }
 tasks.test {
     useJUnitPlatform()

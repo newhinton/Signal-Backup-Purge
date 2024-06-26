@@ -11,12 +11,13 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.terminal.YesNoPrompt
+import com.github.freva.asciitable.AsciiTable
+import com.github.freva.asciitable.Column
+import com.github.freva.asciitable.ColumnData
 import kotlinx.datetime.*
-import kotlinx.datetime.format.byUnicodePattern
 import org.apache.commons.io.FileUtils
 import java.io.File
-import java.util.ArrayList
-import java.util.HashMap
+import java.util.*
 
 
 fun main(args: Array<String>) = SignalBackupPurge().main(args)
@@ -54,14 +55,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
         Cutoffs.setSecondary(keepSecondary)
 
 
-        val validFileList = ArrayList<Backup>()
-
-        val regex = Regex("signal-(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}).*backup")
-        source.listFiles()?.forEach {
-            if(regex.matches(it.name)) {
-                validFileList.add(Backup(it.name))
-            }
-        }
+        val validFileList = generateBackupList()
 
         // Year: [Month: List<Names>]}
         val orderedMap = HashMap<String, HashMap<String, ArrayList<Backup>>>()
@@ -76,8 +70,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
             val assertedMap = orderedMap["${date.year}"]!!
 
-
-            val key = if(Cutoffs.getPrimary().toEpochMilliseconds() < date.toInstant(Utils.getSystemTimezone()).toEpochMilliseconds()) {
+            val key = if(it.isInPrimaryStoragePhase()) {
                 KEY_ALL
             } else {
                 "${date.month.number}"
@@ -135,7 +128,6 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             if(verbosity) {
                 println("Keep: ${source.absoluteFile}/$it")
             }
-
         }
 
 
@@ -228,5 +220,47 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             println("${discardList.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(deleteSize)})")
         }
 
+        val months = processMonths()
+        // todo: pull out some of the list expressions
+        println(TableFormatter.format(months).asString())
+
+    }
+
+    private fun processMonths(): ArrayList<Month> {
+        val validFileList = generateBackupList()
+        val monthMap = HashMap<Int, Month>()
+        validFileList.forEach{
+            val date = it.getDate()
+            // Generate the key from year and month
+            val key = (date.year*100)+date.monthNumber
+
+            if(!monthMap.containsKey(key)) {
+                monthMap[key] = Month(date.year, date.monthNumber)
+            }
+            monthMap[key]!!.backupList.add(it)
+        }
+
+
+        var asList = arrayListOf<Month>()
+        monthMap.forEach { i, month ->
+            asList.add(month)
+        }
+        asList.sortBy { it.year*100+it.month }
+        asList.reverse()
+        return asList
+    }
+
+    fun generateBackupList(): ArrayList<Backup> {
+        val validFileList = ArrayList<Backup>()
+
+        val regex = Regex("signal-(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}).*backup")
+        source.listFiles()?.forEach {
+            if(regex.matches(it.name)) {
+                val backup = Backup(it.name)
+                backup.setRoot(source)
+                validFileList.add(backup)
+            }
+        }
+        return validFileList
     }
 }

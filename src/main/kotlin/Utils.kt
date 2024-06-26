@@ -1,8 +1,6 @@
 package de.felixnuesse
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.*
 
 class Utils {
 
@@ -32,6 +30,18 @@ class Utils {
 
         fun getSystemTimezone(): TimeZone {
             return TimeZone.currentSystemDefault()
+        }
+
+        fun instant(date: LocalDateTime): Instant {
+            return date.toInstant(getSystemTimezone())
+        }
+
+        fun millis(date: LocalDateTime): Long {
+            return instant(date).toEpochMilliseconds()
+        }
+
+        fun millis(instant: Instant): Long {
+            return instant.toEpochMilliseconds()
         }
     }
 

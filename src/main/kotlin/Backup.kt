@@ -1,14 +1,33 @@
 package de.felixnuesse
 
+import de.felixnuesse.Utils.Companion.millis
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.byUnicodePattern
-import kotlinx.datetime.toInstant
+import org.apache.commons.io.FileUtils
+import java.io.File
 
 class Backup(private var name: String) {
 
-    var toBeDeleted: Boolean = false
-    var size: Long = 0
+    private var markedForDeletion: Boolean = false
+    private var root: File? = null
 
+    fun setRoot(source: File) {
+        root = source
+    }
+
+    fun isMarkedForDeletion(): Boolean {
+        return markedForDeletion
+    }
+
+    // todo: do not require root.
+    fun getSize(): Long {
+        return if(root == null) {
+            System.err.println("The Size could not be determined!: $name")
+            -1
+        } else {
+            FileUtils.sizeOf(File("${root!!.absoluteFile}/$name"))
+        }
+    }
 
     fun getDate(): LocalDateTime {
         val dateString = name.replace("signal-", "").replace(".backup", "")
@@ -21,18 +40,18 @@ class Backup(private var name: String) {
         return name
     }
 
-    private fun getYearMonthDate(): LocalDateTime {
-        return LocalDateTime(getDate().year, getDate().month, 1, 0, 0, 0, 0)
+    fun isInPrimaryStoragePhase(): Boolean {
+        return millis(Cutoffs.getPrimary()) < millis(getDate())
     }
 
     fun isAfterPrimaryStoragePhase(): Boolean {
-        val fileDate =  getYearMonthDate().toInstant(Utils.getSystemTimezone()).toEpochMilliseconds()
-        return Cutoffs.getPrimary().toEpochMilliseconds() > fileDate
+        val fileDate =  millis(getDate())
+        return millis(Cutoffs.getPrimary()) > fileDate
     }
 
     fun isAfterSecondaryStoragePhase(): Boolean {
-        val fileDate =  getYearMonthDate().toInstant(Utils.getSystemTimezone()).toEpochMilliseconds()
-        return Cutoffs.getSecondary().toEpochMilliseconds() > fileDate
+        val fileDate = millis(getDate())
+        return millis(Cutoffs.getSecondary()) > fileDate
     }
 
     fun isInSecondaryStoragePhase(): Boolean {
