@@ -36,6 +36,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
     }
 
     private val delete: Boolean by option("-d", "--delete").flag(default = false).help("Immediately delete Files.")
+    private val move: Boolean by option("-m", "--move").flag(default = false).help("Move files to 'deleted' folder instead of deleting. Takes precedent above -d")
     private val dry: Boolean by option("-n", "--dry-run").flag(default = false).help("Print all files that would be deleted by -d.")
     private val yes: Boolean by option("-y", "--yes").flag(default = false).help("Answer all prompts with yes. USE CAREFULLY!")
     private val printDeletes: Boolean by option("-p", "--print-manual-deletion").flag(default = false).help("Print a list of shell commands to purge the signal backup folder manually.")
@@ -74,7 +75,20 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             }
         }
 
-        if(delete && !dry) {
+        if(move && !dry) {
+            val newRoot = File(source.absolutePath, "deleted")
+            newRoot.mkdir()
+            allDeleted.forEach {
+                val source = "${source.absoluteFile}/${it.getName()}"
+                val target = "${newRoot.absoluteFile}/${it.getName()}"
+                File(source).renameTo(File(target))
+                if(verbosity) {
+                    println("Moved: $target")
+                }
+            }
+        }
+
+        if(delete && !dry && !move) {
             allDeleted.forEach {
                 val target = "${source.absoluteFile}/${it.getName()}"
                 if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes) {
