@@ -149,7 +149,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
 
         var asList = arrayListOf<Month>()
-        monthMap.forEach { i, month ->
+        monthMap.forEach { (_, month) ->
             month.markBackups()
             asList.add(month)
         }

@@ -42,8 +42,11 @@ class Month(var year: Int, var month: Int) {
     fun markBackups() {
         backupList.sortBy { it.getDate() }
         val first = backupList.first()
-        val middle = backupList[(backupList.size/2)-1 ] // we start with 0
-
+        val middle = if(backupList.size > 1) {
+            backupList[(backupList.size/2)-1 ] // we start with 0
+        } else {
+            backupList.first()
+        }
 
         // last year, add two per month
         if(first.isInSecondaryStoragePhase()) {
