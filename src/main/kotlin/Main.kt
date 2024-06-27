@@ -11,10 +11,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.terminal.YesNoPrompt
-import com.github.freva.asciitable.AsciiTable
-import com.github.freva.asciitable.Column
-import com.github.freva.asciitable.ColumnData
-import kotlinx.datetime.*
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.util.*
@@ -42,6 +38,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
     private val yes: Boolean by option("-y", "--yes").flag(default = false).help("Answer all prompts with yes. USE CAREFULLY!")
     private val printDeletes: Boolean by option("-p", "--print-manual-deletion").flag(default = false).help("Print a list of shell commands to purge the signal backup folder manually.")
     private val stats: Boolean by option("-s", "--stats").flag(default = false).help("Print statistics about the purge.")
+    private val stats_extensive: Boolean by option("-e", "--stats-extensive").flag(default = false).help("Print even more statistics about the purge.")
     private val keep: Int by option("-k", "--keep").int().default(6).help("Primary Retention Period: This determines how many months keep all backup files.")
     private val keepSecondary: Int by option("-c", "--keep-secondary").int().default(3).help("Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the primary retention period.")
     private val verbosity: Boolean by option("-v", "--verbose").flag(default = false).help("Increases detail of the output. Shows deletions and kept files.")
@@ -94,16 +91,26 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             }
         }
 
-        if(stats) {
-            println("Statistics:")
+        val statisticsTable = if(stats_extensive) {
+            TableFormatter.format(months, true)
+        } else if(stats) {
+            TableFormatter.format(months)
+        } else {
+            ""
+        }
 
+        if(stats or stats_extensive) {
+            if(stats_extensive) {
+                println("Extensive Statistics:")
+            } else {
+                println("Statistics:")
+            }
             println("Checking: ${source.absoluteFile}")
 
-            println(TableFormatter.format(months))
+            println(statisticsTable)
 
             val freed = months.sumOf { it.getDeleted().sumOf { inner -> inner.getSize() }}
             val leftover = months.sumOf { it.getKeptFiles().sumOf { inner -> inner.getSize() }}
-
             println("${allKept.size} Files will be kept. (${FileUtils.byteCountToDisplaySize(leftover)})")
             println("${allDeleted.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(freed)})")
         }

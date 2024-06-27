@@ -7,18 +7,32 @@ import com.github.freva.asciitable.ColumnData
 class TableFormatter {
 
     companion object {
-        fun format(months: ArrayList<Month>): String {
+        fun format(months: ArrayList<Month>, extensive: Boolean = false): String {
 
             val freed = months.sumOf { it.getDeleted().sumOf { inner -> inner.getSize() }}.toString()
             val leftover = months.sumOf { it.getKeptFiles().sumOf { inner -> inner.getSize() }}.toString()
 
-            val formatter = listOf<ColumnData<Month>>(
+            val formatter = arrayListOf<ColumnData<Month>>(
                 Column().header("Year.Month").footer("").with{"${it.year}.${it.month}" },
                 Column().header("Kept").footer(months.sumOf { it.getKept() }.toString()).with{ it.getKept().toString() },
                 Column().header("Deleted").footer(months.sumOf { it.getDeletions() }.toString()).with{ it.getDeletions().toString() },
                 Column().header("Freed Storage").footer(freed).with { it.getDeleted().sumOf { it.getSize()}.toString() },
                 Column().header("Leftover Storage").footer(leftover).with { it.getKeptFiles().sumOf { it.getSize()}.toString() }
             )
+
+            if(extensive) {
+                formatter.add(
+                    Column().header("Files Kept").with {
+                        it.getKeptFiles().joinToString(separator = "\n") { file -> file.getName() }
+                    }
+                )
+
+                formatter.add(
+                    Column().header("Files Deleted").with {
+                        it.getDeleted().joinToString(separator = "\n") { file -> file.getName() }
+                    }
+                )
+            }
 
             val SLIM_FANCY_ASCII = arrayOf('┌', '─', '┬', '┐', '│', '│', '│', '╞', '═', '╪', '╡', '│', '│', '│', '├', '─', '┼', '┤', '╞', '═', '╪', '╡', '│', '│', '│', '└', '─', '┴', '┘')
 
@@ -27,6 +41,9 @@ class TableFormatter {
                 .border(SLIM_FANCY_ASCII)
                 .data(months, formatter)
 
+            if(extensive) {
+                return table.asString()
+            }
 
             // Figure out which seperators to keep:
             val linesToKeep = arrayListOf<Int>()
