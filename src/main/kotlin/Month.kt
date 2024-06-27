@@ -2,7 +2,10 @@ package de.felixnuesse
 
 import de.felixnuesse.Utils.Companion.millis
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Month
+import java.time.Year
 import java.util.ArrayList
+import kotlin.math.abs
 
 class Month(var year: Int, var month: Int) {
 
@@ -42,17 +45,25 @@ class Month(var year: Int, var month: Int) {
     fun markBackups() {
         backupList.sortBy { it.getDate() }
         val first = backupList.first()
-        val middle = if(backupList.size > 1) {
-            backupList[(backupList.size/2)-1 ] // we start with 0
-        } else {
-            backupList.first()
+
+        var middle_ish = backupList.first()
+        //use upper for a little better spacing
+        val thisMonthMiddle = Month(month).length(Year.of(year).isLeap).floorDiv(2)+1
+
+        // try to find the second backup as far in the middle as possible
+        backupList.forEach {
+            val distanceCurrent = thisMonthMiddle - it.getDate().dayOfMonth
+            val distanceLast = thisMonthMiddle - middle_ish.getDate().dayOfMonth
+            if(abs(distanceCurrent) < abs(distanceLast)) {
+                middle_ish = it
+            }
         }
 
         // last year, add two per month
         if(first.isInSecondaryStoragePhase()) {
             if(backupList.size > 3){
                 backupList.forEach {
-                    if(it != first && it != middle) {
+                    if(it != first && it != middle_ish) {
                         it.markForDeletion()
                     }
                 }
