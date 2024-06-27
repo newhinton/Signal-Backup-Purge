@@ -107,8 +107,14 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
 
             val freed = months.sumOf { it.getDeleted().sumOf { inner -> inner.getSize() }}
             val leftover = months.sumOf { it.getKeptFiles().sumOf { inner -> inner.getSize() }}
-            println("${allKept.size} Files will be kept. (${FileUtils.byteCountToDisplaySize(leftover)})")
-            println("${allDeleted.size} Files will be deleted. (${FileUtils.byteCountToDisplaySize(freed)})")
+
+            val willOrWere = if(dry) {
+                "will be"
+            } else {
+                "were"
+            }
+            println("${allKept.size} Files $willOrWere kept. (${FileUtils.byteCountToDisplaySize(leftover)})")
+            println("${allDeleted.size} Files $willOrWere deleted. (${FileUtils.byteCountToDisplaySize(freed)})")
         }
 
     }
