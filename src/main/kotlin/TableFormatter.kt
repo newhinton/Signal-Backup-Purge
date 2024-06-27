@@ -3,17 +3,25 @@ package de.felixnuesse
 import com.github.freva.asciitable.AsciiTable
 import com.github.freva.asciitable.Column
 import com.github.freva.asciitable.ColumnData
+import com.github.freva.asciitable.Styler
+import org.fusesource.jansi.Ansi
+import java.util.stream.Collectors
+
+
 
 class TableFormatter {
 
     companion object {
+
+        const val HEADER_YEARMONTH = "Year.Month"
+
         fun format(months: ArrayList<Month>, extensive: Boolean = false): String {
 
             val freed = months.sumOf { it.getDeleted().sumOf { inner -> inner.getSize() }}.toString()
             val leftover = months.sumOf { it.getKeptFiles().sumOf { inner -> inner.getSize() }}.toString()
 
             val formatter = arrayListOf<ColumnData<Month>>(
-                Column().header("Year.Month").footer("").with{"${it.year}.${it.month}" },
+                Column().header(HEADER_YEARMONTH).footer("").with{ "${it.year}.${it.month}" },
                 Column().header("Kept").footer(months.sumOf { it.getKept() }.toString()).with{ it.getKept().toString() },
                 Column().header("Deleted").footer(months.sumOf { it.getDeletions() }.toString()).with{ it.getDeletions().toString() },
                 Column().header("Freed Storage").footer(freed).with { it.getDeleted().sumOf { it.getSize()}.toString() },
@@ -34,12 +42,33 @@ class TableFormatter {
                 )
             }
 
+
+            val styler: Styler = object : Styler {
+                override fun styleCell(column: Column, row: Int, col: Int, data: List<String>): List<String> {
+                    if (column.header.equals(HEADER_YEARMONTH)) {
+                        if(months[row].isInPrimaryStoragePhase()) {
+                            return data.stream()
+                                .map { line -> Ansi.ansi().fgBright(Ansi.Color.GREEN).a(line).reset().toString() }
+                                .collect(Collectors.toList())
+                        }
+                        if(months[row].isInSecondaryStoragePhase()) {
+                            return data.stream()
+                                .map { line -> Ansi.ansi().fgBright(Ansi.Color.YELLOW).a(line).reset().toString() }
+                                .collect(Collectors.toList())
+                        }
+                    }
+                    return data
+                }
+            }
+
+
             val SLIM_FANCY_ASCII = arrayOf('┌', '─', '┬', '┐', '│', '│', '│', '╞', '═', '╪', '╡', '│', '│', '│', '├', '─', '┼', '┤', '╞', '═', '╪', '╡', '│', '│', '│', '└', '─', '┴', '┘')
 
             val table = AsciiTable.builder()
                 .lineSeparator("\r\n")
                 .border(SLIM_FANCY_ASCII)
                 .data(months, formatter)
+                .styler(styler)
 
             if(extensive) {
                 return table.asString()

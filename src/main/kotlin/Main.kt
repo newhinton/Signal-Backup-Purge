@@ -17,8 +17,10 @@ import java.util.*
 
 
 fun main(args: Array<String>) = SignalBackupPurge().main(args)
+const val default_primary = 6
+const val default_secondary = 6
 
-const val helpString="Scan <source> for Signal Backups. This tool keeps 6 full months of your backups by default, and 3 months after that keep 2 backups. "+
+const val helpString="Scan <source> for Signal Backups. This tool keeps $default_primary full months of your backups by default, and $default_secondary months after that keep 2 backups. "+
         "\n"+
         "\n"+
         "This is called the secondary retention. Secondary retention uses the first backup in a month, and form all existing backups for that month, the closest to the middle."+
@@ -39,8 +41,8 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
     private val printDeletes: Boolean by option("-p", "--print-manual-deletion").flag(default = false).help("Print a list of shell commands to purge the signal backup folder manually.")
     private val stats: Boolean by option("-s", "--stats").flag(default = false).help("Print statistics about the purge.")
     private val stats_extensive: Boolean by option("-e", "--stats-extensive").flag(default = false).help("Print even more statistics about the purge.")
-    private val keep: Int by option("-k", "--keep").int().default(6).help("Primary Retention Period: This determines how many months keep all backup files.")
-    private val keepSecondary: Int by option("-c", "--keep-secondary").int().default(3).help("Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the primary retention period.")
+    private val keep: Int by option("-k", "--keep").int().default(default_primary).help("Primary Retention Period: This determines how many months keep all backup files.")
+    private val keepSecondary: Int by option("-c", "--keep-secondary").int().default(default_secondary).help("Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the primary retention period.")
     private val verbosity: Boolean by option("-v", "--verbose").flag(default = false).help("Increases detail of the output. Shows deletions and kept files.")
     private val source by argument().file().default(File("."))
 
@@ -66,19 +68,13 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             }
         }
 
-        if(dry){
-            allDeleted.forEach {
-                println("Deleted: ${source.absoluteFile}/${it.getName()}")
-            }
-        }
-
         if(printDeletes){
             allDeleted.forEach {
                 println("rm ${source.absoluteFile}/${it.getName()}")
             }
         }
 
-        if(delete) {
+        if(delete && !dry) {
             allDeleted.forEach {
                 val target = "${source.absoluteFile}/${it.getName()}"
                 if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes) {

@@ -15,6 +15,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("commons-io:commons-io:2.16.1")
     implementation("com.github.freva:ascii-table:1.8.0")
+    // https://mvnrepository.com/artifact/org.fusesource.jansi/jansi
+    implementation("org.fusesource.jansi:jansi:2.4.1")
 }
 tasks.test {
     useJUnitPlatform()

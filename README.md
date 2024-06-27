@@ -37,6 +37,7 @@ It helps me to dedicate time to further improve my apps!
 ## Libraries
 - [CLICKT](https://ajalt.github.io/clikt/) - Command Line Parser for kotlin
 - [ascii-table](https://github.com/freva/ascii-table) by [freva](https://github.com/freva) - Command Line Table Formatter
+- [Janis](http://fusesource.github.io/jansi/) - Command Line Colorizer
 
 ## Contributing
 
