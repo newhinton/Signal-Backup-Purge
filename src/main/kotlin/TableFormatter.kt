@@ -77,7 +77,12 @@ class TableFormatter {
             // Figure out which seperators to keep:
             val linesToKeep = arrayListOf<Int>()
             var i = 4 // Magic number: the first data row is in line 4, after the header
-            var lastyear = months.first().year
+            var lastyear = if(months.size > 0 ) {
+                months.first().year
+            } else {
+                ""
+            }
+
             months.forEach {
                 if(lastyear != it.year) {
                     linesToKeep.add(i-2)
