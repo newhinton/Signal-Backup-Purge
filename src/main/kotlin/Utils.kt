@@ -1,6 +1,7 @@
 package de.felixnuesse
 
 import kotlinx.datetime.*
+import org.apache.commons.io.FileUtils
 
 class Utils {
 
@@ -42,6 +43,10 @@ class Utils {
 
         fun millis(instant: Instant): Long {
             return instant.toEpochMilliseconds()
+        }
+
+        fun human(filesize: Long): String? {
+            return FileUtils.byteCountToDisplaySize(filesize)
         }
     }
 
