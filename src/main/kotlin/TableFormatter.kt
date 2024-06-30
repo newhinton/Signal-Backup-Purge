@@ -9,7 +9,6 @@ import org.fusesource.jansi.Ansi
 import java.util.stream.Collectors
 
 
-
 class TableFormatter {
 
     companion object {
@@ -74,6 +73,16 @@ class TableFormatter {
             if(extensive) {
                 return table.asString()
             }
+
+
+            /*
+             In theory, there is another way. I could pre-process the data,
+             and create a grouping by concatenating the cells for the "group"
+             before processing with the table tool. The drawback is that
+             i have to keep track over the newlines i would have to add
+             to each non-list-column (keep/delete), so that we dont missaling them.
+             This seems easier and less error prone.
+            */
 
             // Figure out which seperators to keep:
             val linesToKeep = arrayListOf<Int>()
