@@ -94,11 +94,6 @@ class Month(var year: Int, var month: Int) {
         // calculate the interval length in hours
         val intervalLength = (totalDuration / numberOfIntervals).coerceAtLeast(1).toLong()
 
-
-        println("#### $year.$month")
-        println("$numberOfIntervals $intervalLength")
-
-
         // Create the pruned list
         val keepDates = mutableListOf(backupList.first())
         var currentIntervalStart = first
@@ -109,8 +104,6 @@ class Month(var year: Int, var month: Int) {
             // eg, 2 should be kept: then without it the first and last would be stored.
             // this way, we get the first and one in the middle
             val betweenIntervalStartAndEnd = currentIntervalStart.plusHours(intervalLength/2)
-            println("Interval Start to match: $betweenIntervalStartAndEnd")
-
 
             // This only takes the closest of all matches. This will filter out anything but the first backup per day.
             // If multiple backups per day exist, only the closest is kept.
@@ -119,7 +112,6 @@ class Month(var year: Int, var month: Int) {
 
             // move interval to next start point
             currentIntervalStart = currentIntervalStart.plusHours(intervalLength)
-            println("nextIntervalStart $currentIntervalStart")
         }
 
         backupList.forEach {
