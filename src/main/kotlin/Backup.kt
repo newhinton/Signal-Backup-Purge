@@ -1,10 +1,14 @@
 package de.felixnuesse
 
+import de.felixnuesse.Utils.Companion.getSystemTimezone
 import de.felixnuesse.Utils.Companion.millis
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.byUnicodePattern
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toLocalDateTime
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.time.temporal.ChronoUnit
 
 class Backup(private var name: String) {
 
@@ -43,6 +47,10 @@ class Backup(private var name: String) {
         return dateTimeFormat.parse(dateString)
     }
 
+    fun getJavaDate(): java.time.LocalDateTime {
+        return getDate().toJavaLocalDateTime()
+    }
+
     fun getName(): String {
         return name
     }
@@ -63,5 +71,16 @@ class Backup(private var name: String) {
 
     fun isInSecondaryStoragePhase(): Boolean {
         return isAfterPrimaryStoragePhase() and !isAfterSecondaryStoragePhase()
+    }
+
+    /**
+     * Returns the amount of months we are already into the secondary phase.
+     * -1 for either before or after
+     */
+    fun secondaryStoragePhaseProgession(): Long {
+        if(!isInSecondaryStoragePhase()) {
+            return -1
+        }
+        return ChronoUnit.MONTHS.between(Cutoffs.getSecondary().toLocalDateTime(getSystemTimezone()).toJavaLocalDateTime(), getJavaDate())
     }
 }
