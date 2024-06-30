@@ -23,8 +23,9 @@ const val default_secondary = 6
 const val helpString="Scan <source> for Signal Backups. This tool keeps $default_primary full months of your backups by default, and $default_secondary months after that keep 2 backups. "+
         "\n"+
         "\n"+
-        "This is called the secondary retention. Secondary retention uses the first backup in a month, and form all existing backups for that month, the closest to the middle."+
-        "After the secondary retention period, only the first backup per month is kept."+
+        "This is called the secondary retention. Secondary retention tries to evenly distribute kept backups over the month,"+
+        "keeping less and less backups the further in they are in the secondary phase."+
+        "After the secondary retention period, only the first and the middle-most backup per month is kept."+
         "\n"+
         "\n"+
         "Note: Only files named \"signal-yyyy-MM-dd-HH-mm-ss.backup\" are recognized. Be careful to check that all the files are named that way! Files that do not start with 'signal' and end with '.backup' are ignored regardless."
