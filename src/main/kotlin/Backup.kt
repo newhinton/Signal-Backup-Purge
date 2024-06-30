@@ -11,8 +11,11 @@ class Backup(private var name: String) {
     private var markedForDeletion: Boolean = false
     private var root: File? = null
 
+    private var size = 0L
+
     fun setRoot(source: File) {
         root = source
+        size = FileUtils.sizeOf(File("${root!!.absoluteFile}/$name"))
     }
 
     fun isMarkedForDeletion(): Boolean {
@@ -29,7 +32,7 @@ class Backup(private var name: String) {
             System.err.println("The Size could not be determined!: $name")
             -1
         } else {
-            FileUtils.sizeOf(File("${root!!.absoluteFile}/$name"))
+            size
         }
     }
 
