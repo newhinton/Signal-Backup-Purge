@@ -1,6 +1,5 @@
 package de.felixnuesse
 
-import de.felixnuesse.Utils.Companion.ceilDiv
 import de.felixnuesse.Utils.Companion.millis
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
