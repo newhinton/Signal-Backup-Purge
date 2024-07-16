@@ -20,9 +20,40 @@ Grab the latest release and run it like this:
 java -jar Signal-Backup-Purge.jar -h
 ```
 
+## Disclaimer
+Use this tool on your own risk. Make sure you do not delete anything on accident. This tool has no option to restore anything.
+If you are unsure, never ever use the `-y`-option, and always use the `-m`-option. What they do, see below.
+
+I am not taking responsibility for any lost data.
 
 ## Usage
-[See the documentation](https://felixnuesse.de/donate). Which i haven't written yet.
+
+```
+Usage: signal-backup-purge [<options>] [<source>]
+
+Scan <source> for Signal Backups. This tool keeps 6 full months of your backups by default, and 6 months after that keep 2 backups.
+
+This is called the secondary retention. Secondary retention tries to evenly distribute kept backups over the month,keeping less and less backups the
+further in they are in the secondary phase.After the secondary retention period, only the first and the middle-most backup per month is kept.
+
+Note: Only files named "signal-yyyy-MM-dd-HH-mm-ss.backup" are recognized. Be careful to check that all the files are named that way! Files that do not
+start with 'signal' and end with '.backup' are ignored regardless.
+
+Options:
+--version                    Show the version and exit
+-d, --delete                 Immediately delete Files.
+-m, --move                   Move files to 'deleted' folder instead of deleting. Takes precedent above -d
+-n, --dry-run                Print all files that would be deleted by -d.
+-y, --yes                    Answer all prompts with yes. USE CAREFULLY!
+-p, --print-manual-deletion  Print a list of shell commands to purge the signal backup folder manually.
+-s, --stats                  Print statistics about the purge.
+-e, --stats-extensive        Print even more statistics about the purge.
+-k, --keep=<int>             Primary Retention Period: This determines how many months keep all backup files.
+-c, --keep-secondary=<int>   Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the
+primary retention period.
+-v, --verbose                Increases detail of the output. Shows deletions and kept files.
+-h, --help                   Show this message and exit
+```
 
 ### Example:
 
