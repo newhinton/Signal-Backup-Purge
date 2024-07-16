@@ -24,6 +24,14 @@ java -jar Signal-Backup-Purge.jar -h
 ## Usage
 [See the documentation](https://felixnuesse.de/donate). Which i haven't written yet.
 
+### Example:
+
+Running `java -jar Signal-Backup-Purge.jar -k 3 -c 4 -e /home/user/SignalBackupFolder` will yield:
+
+![Example result](res/result.png)
+
+(The above image has been slightly tampered with, because my testfiles do not contain any data. Therefore they are empty.)
+
 
 Donations
 ------------
