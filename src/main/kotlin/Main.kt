@@ -4,10 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.help
-import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.terminal.YesNoPrompt
@@ -31,6 +28,10 @@ const val helpString="Scan <source> for Signal Backups. This tool keeps $default
         "Note: Only files named \"signal-yyyy-MM-dd-HH-mm-ss.backup\" are recognized. Be careful to check that all the files are named that way! Files that do not start with 'signal' and end with '.backup' are ignored regardless."
 
 class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpString) {
+
+    init {
+        versionOption("1.0.0")
+    }
 
     companion object {
         const val KEY_ALL = "all"
