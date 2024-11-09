@@ -1,5 +1,5 @@
 # Signal Backup Purge - Sensible cleanup for signal backups
-[![license: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/newhinton/Round-Sync/blob/master/LICENSE)
+[![license: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/newhinton/Signal-Backup-Purge/blob/master/LICENSE)
 [![Documentation](https://img.shields.io/badge/Documentation-NotYet-4aad4e)](https://felixnuesse.de/donate) [![supportive flags](https://img.shields.io/badge/support-🇺🇦_🏳️‍⚧_🏳️‍🌈-4aad4e)](https://roundsync.com)
 
 
