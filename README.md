@@ -49,6 +49,7 @@ Options:
 -s, --stats                  Print statistics about the purge.
 -e, --stats-extensive        Print even more statistics about the purge.
 -t, --tiny                   A reduced, less table centric statistic view
+  , --nocolor                Do not use ansi escape sequences to color output
 -k, --keep=<int>             Primary Retention Period: This determines how many months keep all backup files.
 -c, --keep-secondary=<int>   Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the
 primary retention period.

@@ -9,6 +9,8 @@ import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import org.apache.commons.io.FileUtils
+import org.fusesource.jansi.AnsiConsole
+import org.fusesource.jansi.AnsiMode
 import java.io.File
 import java.util.*
 
@@ -48,6 +50,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
     private val keepSecondary: Int by option("-c", "--keep-secondary").int().default(default_secondary).help("Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the primary retention period.")
     private val verbosity: Boolean by option("-v", "--verbose").flag(default = false).help("Increases detail of the output. Shows deletions and kept files.")
     private val tiny: Boolean by option("-t", "--tiny").flag(default = false).help("Create a tiny log output in form of a flowing text")
+    private val nocolor: Boolean by option("--nocolor").flag(default = false).help("Do not use colored output")
     private val source by argument().file().default(File("."))
 
 
@@ -112,6 +115,11 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
             TableFormatter.format(months)
         } else {
             ""
+        }
+
+        if(nocolor) {
+            AnsiConsole.systemInstall()
+            AnsiConsole.out().mode = AnsiMode.Strip
         }
 
 
