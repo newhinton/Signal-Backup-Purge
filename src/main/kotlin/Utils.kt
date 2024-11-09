@@ -48,6 +48,10 @@ class Utils {
         fun human(filesize: Long): String? {
             return FileUtils.byteCountToDisplaySize(filesize)
         }
+
+        fun strFormat(number: Int): String {
+            return "%02d".format(number)
+        }
     }
 
 }

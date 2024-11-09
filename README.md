@@ -48,6 +48,7 @@ Options:
 -p, --print-manual-deletion  Print a list of shell commands to purge the signal backup folder manually.
 -s, --stats                  Print statistics about the purge.
 -e, --stats-extensive        Print even more statistics about the purge.
+-t, --tiny                   A reduced, less table centric statistic view
 -k, --keep=<int>             Primary Retention Period: This determines how many months keep all backup files.
 -c, --keep-secondary=<int>   Secondary Retention Period: This determines how many months keep two backup files, beginning with the first month after the
 primary retention period.

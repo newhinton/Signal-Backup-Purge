@@ -21,7 +21,7 @@ class TableFormatter {
             val leftover =  human(months.sumOf { it.getKeptFiles().sumOf { inner -> inner.getSize() }}).toString()
 
             val formatter = arrayListOf<ColumnData<Month>>(
-                Column().header(HEADER_YEARMONTH).footer("").with{ "${it.year}.${it.month}" },
+                Column().header(HEADER_YEARMONTH).footer("").with{ "${it.year}.${Utils.strFormat(it.month)}" },
                 Column().header("Kept").footer(months.sumOf { it.getKept() }.toString()).with{ it.getKept().toString() },
                 Column().header("Deleted").footer(months.sumOf { it.getDeletions() }.toString()).with{ it.getDeletions().toString() },
                 Column().header("Freed Storage").footer(freed).with { human(it.getDeleted().sumOf { file -> file.getSize()}).toString() },
