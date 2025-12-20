@@ -97,7 +97,7 @@ class SignalBackupPurge : CliktCommand(printHelpOnEmptyArgs = true, help = helpS
         if(delete && !dry && !move) {
             allDeleted.forEach {
                 val target = "${source.absoluteFile}/${it.getName()}"
-                if (YesNoPrompt("Delete: $target", terminal).ask() == true || yes) {
+                if (yes || YesNoPrompt("Delete: $target", terminal).ask() == true) {
                     File(target).delete()
                     if(verbosity) {
                         println("Deleted: $target")
